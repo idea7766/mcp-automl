@@ -29,6 +29,20 @@ Add to your MCP client configuration (e.g., Claude Desktop, Gemini CLI, Cursor, 
 }
 ```
 
+**Or using Docker:**
+
+```json
+{
+  "mcpServers": {
+    "mcp-automl": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "-v", "${PWD}:/workspace", "-v", "${HOME}/.mcp-automl:/root/.mcp-automl", "idea7766/mcp-automl:latest"]
+    }
+  }
+}
+```
+
+
 ### Available Tools
 
 | Tool | Description |
