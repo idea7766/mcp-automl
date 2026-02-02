@@ -65,16 +65,18 @@ MCP AutoML includes an **data science workflow skill** that guides AI agents thr
 
 ### Installing the Skill
 
-Copy the skill directory to your agent's skill folder:
+**For Gemini CLI:**
 
 ```bash
-# For Gemini Code Assist
-cp -r skill/data-science-workflow ~/.gemini/skills/
+gemini skills install https://github.com/idea7766/mcp-automl --path skill/data-science-workflow
+```
 
-# For Claude Code
-cp -r skill/data-science-workflow ~/.claude/skills/
+**For Claude Code:**
 
-# For other agents, copy to their respective skill directories
+```bash
+# Clone the repo and copy the skill
+git clone https://github.com/idea7766/mcp-automl.git
+cp -r mcp-automl/skill/data-science-workflow ~/.claude/skills/
 ```
 
 The skill file is located at `skill/data-science-workflow/SKILL.md`.
