@@ -23,7 +23,11 @@ Add to your MCP client configuration (e.g., Claude Desktop, Gemini CLI, Cursor, 
   "mcpServers": {
     "mcp-automl": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/idea7766/mcp-automl", "mcp-automl"]
+      "args": ["--python", "3.11", "mcp-automl"]
+    }
+  }
+}
+```
     }
   }
 }
@@ -68,6 +72,17 @@ The skill file is located at `skill/data-science-workflow/SKILL.md`.
 ## Configuration
 
 Models and experiments are saved to `~/.mcp-automl/experiments/` by default.
+## Troubleshooting
+
+### macOS: LightGBM OpenMP Error
+
+If you encounter an error like `Library not loaded: @rpath/libomp.dylib`, you need to install OpenMP:
+
+```bash
+brew install libomp
+```
+
+This is a system-level dependency required by LightGBM on macOS. Linux and Windows users typically don't need this step.
 
 ## Dependencies
 
