@@ -28,10 +28,6 @@ Add to your MCP client configuration (e.g., Claude Desktop, Gemini CLI, Cursor, 
   }
 }
 ```
-    }
-  }
-}
-```
 
 ### Available Tools
 
