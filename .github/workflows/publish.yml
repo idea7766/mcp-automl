@@ -1,0 +1,89 @@
+name: Publish to PyPI
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'New version number (e.g., 0.1.1)'
+        required: true
+        type: string
+
+jobs:
+  build-and-publish:
+    name: Build and publish
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: ".python-version"
+
+      - name: Validate version
+        env:
+          NEW_VERSION: ${{ inputs.version }}
+          PACKAGE_NAME: "mcp-automl"
+        run: |
+          echo "Fetching latest version from PyPI..."
+          LATEST_VERSION=$(curl -s https://pypi.org/pypi/$PACKAGE_NAME/json | python3 -c "import sys, json; print(json.load(sys.stdin)['info']['version'])" 2>/dev/null || echo "0.0.0")
+          
+          echo "Latest version on PyPI: $LATEST_VERSION"
+          echo "New version: $NEW_VERSION"
+          
+          if [ "$LATEST_VERSION" != "0.0.0" ]; then
+            python3 -c "
+          from packaging import version
+          import sys
+          
+          latest = version.parse('$LATEST_VERSION')
+          new = version.parse('$NEW_VERSION')
+          
+          if new <= latest:
+              print(f'Error: New version {new} must be greater than latest version {latest}')
+              sys.exit(1)
+          "
+          fi
+
+      - name: Update version in pyproject.toml
+        env:
+          NEW_VERSION: ${{ inputs.version }}
+        run: |
+          # Use sed to update the version line. 
+          # Assumes version = "..." is near the top under [project]
+          sed -i "s/^version = \".*\"/version = \"$NEW_VERSION\"/" pyproject.toml
+          
+          # Verify the change
+          grep "version = \"$NEW_VERSION\"" pyproject.toml
+
+      - name: Commit and Push Tag
+        env:
+          NEW_VERSION: ${{ inputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          git add pyproject.toml
+          git commit -m "Bump version to $NEW_VERSION"
+          git tag "v$NEW_VERSION"
+          
+          git push origin main
+          git push origin "v$NEW_VERSION"
+
+      - name: Build
+        run: uv build
+
+      - name: Publish distributions to PyPI
+        run: uv publish
