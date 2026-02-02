@@ -88,3 +88,11 @@ jobs:
 
       - name: Publish distributions to PyPI
         run: uv publish
+
+      - name: Trigger Docker Build
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEW_VERSION: ${{ inputs.version }}
+        run: |
+          gh workflow run docker-publish.yml \
+            --ref "v$NEW_VERSION"
