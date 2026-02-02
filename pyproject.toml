@@ -13,6 +13,9 @@ dependencies = [
     "scikit-learn<1.4",
     "tabulate>=0.9.0",
 ]
+authors = [
+  {name = "ke", email = "idea7766@gmail.com"},
+]
 
 [project.scripts]
 mcp-automl = "mcp_automl.server:main"
