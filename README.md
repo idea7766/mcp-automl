@@ -21,7 +21,7 @@ Add to your MCP client configuration (e.g., Claude Desktop, Gemini CLI, Cursor, 
 ```json
 {
   "mcpServers": {
-    "auto-ml": {
+    "mcp-automl": {
       "command": "uvx",
       "args": ["--from", "git+https://github.com/idea7766/mcp-automl", "mcp-automl"]
     }
