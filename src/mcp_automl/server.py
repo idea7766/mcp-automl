@@ -10,8 +10,8 @@ import argparse
 from pathlib import Path
 from mcp.server.fastmcp import FastMCP, Context
 from mcp.types import PromptMessage, TextContent
-from pycaret.classification import setup as setup_clf, compare_models as compare_models_clf, pull as pull_clf, save_model as save_model_clf, load_model as load_model_clf, predict_model as predict_model_clf, get_config as get_config_clf
-from pycaret.regression import setup as setup_reg, compare_models as compare_models_reg, pull as pull_reg, save_model as save_model_reg, load_model as load_model_reg, predict_model as predict_model_reg, get_config as get_config_reg
+from pycaret.classification import setup as setup_clf, compare_models as compare_models_clf, pull as pull_clf, save_model as save_model_clf, load_model as load_model_clf, predict_model as predict_model_clf, get_config as get_config_clf, tune_model as tune_model_clf, finalize_model as finalize_model_clf
+from pycaret.regression import setup as setup_reg, compare_models as compare_models_reg, pull as pull_reg, save_model as save_model_reg, load_model as load_model_reg, predict_model as predict_model_reg, get_config as get_config_reg, tune_model as tune_model_reg, finalize_model as finalize_model_reg
 
 # Configure logging
 logging.basicConfig(
@@ -363,12 +363,31 @@ def _train_classifier_sync(run_id: str, data_path: str, target_column: str, igno
         best_model = best_model[0]
     results = pull_clf()
     
-    # Extract feature importances
+    # Tune Model
+    logger.info("Tuning best model with Optuna...")
+    try:
+         best_model = tune_model_clf(best_model, optimize=optimize, search_library="optuna", n_trials=10)
+         results = pull_clf()
+    except Exception as e:
+         logger.warning(f"Tuning failed: {e}. Proceeding with untuned model.")
+
+    
+    # Extract feature importances (from the potentially tuned model)
     feature_importances = _get_feature_importances(best_model, get_config_clf)
     
-    # Evaluate on holdout (test_data or split)
-    predict_model_clf(best_model)
-    test_results = pull_clf()
+    # Evaluate on holdout (test_data_path)
+    test_results = None
+    if test_data_path:
+         logger.info("Evaluating on provided test data...")
+         predict_model_clf(best_model)
+         test_results = pull_clf()
+    
+    # Finalize Model
+    logger.info("Finalizing model on all data...")
+    try:
+        best_model = finalize_model_clf(best_model)
+    except Exception as e:
+        logger.warning(f"Finalization failed: {e}. Saving non-finalized model.")
     
     metadata = {
         "data_path": data_path,
@@ -543,12 +562,30 @@ def _train_regressor_sync(run_id: str, data_path: str, target_column: str, ignor
         best_model = best_model[0]
     results = pull_reg()
     
+    # Tune Model
+    logger.info("Tuning best model with Optuna...")
+    try:
+         best_model = tune_model_reg(best_model, optimize=optimize, search_library="optuna", n_trials=10)
+         results = pull_reg()
+    except Exception as e:
+         logger.warning(f"Tuning failed: {e}. Proceeding with untuned model.")
+    
     # Extract feature importances
     feature_importances = _get_feature_importances(best_model, get_config_reg)
     
     # Evaluate on holdout
-    predict_model_reg(best_model)
-    test_results = pull_reg()
+    test_results = None
+    if test_data_path:
+        logger.info("Evaluating on provided test data...")
+        predict_model_reg(best_model)
+        test_results = pull_reg()
+
+    # Finalize Model
+    logger.info("Finalizing model on all data...")
+    try:
+        best_model = finalize_model_reg(best_model)
+    except Exception as e:
+        logger.warning(f"Finalization failed: {e}. Saving non-finalized model.")
     
     metadata = {
         "data_path": data_path,
