@@ -26,6 +26,10 @@ DEFAULT_SESSION_ID = 42
 QUERY_RESULT_LIMIT = 100
 SUPPORTED_FILE_FORMATS = ('.csv', '.parquet', '.json')
 
+# Models known to be computationally expensive or slow
+HEAVY_MODELS_CLF = ['svm', 'rbfsvm', 'gpc', 'mlp', 'ridge', 'qda']
+HEAVY_MODELS_REG = ['svm', 'mlp', 'kr', 'ard', 'par', 'ransac', 'tr', 'huber']
+
 mcp = FastMCP("mcp-automl")
 
 class PandasJSONEncoder(json.JSONEncoder):
@@ -355,6 +359,9 @@ def _train_classifier_sync(run_id: str, data_path: str, target_column: str, igno
         compare_kwargs["include"] = include_models
     if exclude_models is not None:
         compare_kwargs["exclude"] = exclude_models
+    elif include_models is None:
+        # Default: exclude heavy models if no specific inclusion/exclusion is requested
+        compare_kwargs["exclude"] = HEAVY_MODELS_CLF
     
     best_model = compare_models_clf(**compare_kwargs)
     if isinstance(best_model, list):
@@ -427,8 +434,8 @@ async def train_classifier(data_path: str, target_column: str, ctx: Context,
         target_column: Name of target column.
         test_data_path: Optional path to specific test dataset. If provided, used for evaluation/holdout.
         optimize: Metric to optimize for (e.g., 'Accuracy', 'AUC', 'Recall', 'Precision', 'F1', 'Kappa', 'MCC'). Default is 'Accuracy'.
-        include_models: List of model IDs to include in comparison (e.g., ['lr', 'dt', 'rf']). If None, all models are compared.
-        exclude_models: List of model IDs to exclude from comparison (e.g., ['catboost']). If None, no models are excluded.
+        include_models: List of model IDs to include in comparison (e.g., ['lr', 'dt', 'rf']). If None, all models are compared (except heavy ones excluded by default).
+        exclude_models: List of model IDs to exclude from comparison (e.g., ['catboost']). If None, defaults to excluding heavy models: ['svm', 'rbfsvm', 'gpc', 'mlp', 'ridge', 'qda'].
         ignore_features: Features to ignore.
         numeric_features: Features to treat as numeric.
         categorical_features: Features to treat as categorical.
@@ -554,6 +561,9 @@ def _train_regressor_sync(run_id: str, data_path: str, target_column: str, ignor
         compare_kwargs["include"] = include_models
     if exclude_models is not None:
         compare_kwargs["exclude"] = exclude_models
+    elif include_models is None:
+        # Default: exclude heavy models if no specific inclusion/exclusion is requested
+        compare_kwargs["exclude"] = HEAVY_MODELS_REG
     
     best_model = compare_models_reg(**compare_kwargs)
     if isinstance(best_model, list):
@@ -625,8 +635,8 @@ async def train_regressor(data_path: str, target_column: str, ctx: Context,
         target_column: Name of target column.
         test_data_path: Optional path to specific test dataset. If provided, used for evaluation/holdout.
         optimize: Metric to optimize for (e.g., 'R2', 'RMSE', 'MAE', 'MSE', 'RMSLE', 'MAPE'). Default is 'R2'.
-        include_models: List of model IDs to include in comparison (e.g., ['lr', 'dt', 'rf']). If None, all models are compared.
-        exclude_models: List of model IDs to exclude from comparison (e.g., ['catboost']). If None, no models are excluded.
+        include_models: List of model IDs to include in comparison (e.g., ['lr', 'dt', 'rf']). If None, all models are compared (except heavy ones excluded by default).
+        exclude_models: List of model IDs to exclude from comparison (e.g., ['catboost']). If None, defaults to excluding heavy models: ['svm', 'mlp', 'kr', 'ard', 'par', 'ransac', 'tr', 'huber'].
         ignore_features: Features to ignore.
         numeric_features: Features to treat as numeric.
         categorical_features: Features to treat as categorical.
