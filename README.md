@@ -16,6 +16,8 @@ MCP AutoML seperates tools and workflows, allowing you to create your own workfl
 
 ### Configure MCP Server
 
+Before using this MCP server, you can run `uv tool install --python 3.11 mcp-automl` to install it. It will cache the dependencies and make it faster to start the server.
+
 Add to your MCP client configuration (e.g., Claude Desktop, Gemini CLI, Cursor, Antigravity):
 
 ```json
